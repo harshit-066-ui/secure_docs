@@ -1,8 +1,6 @@
 import { supabaseAdmin, supabaseAnon } from '../config/supabase.js';
 import { AppError } from '../utils/AppError.js';
 
-const BUCKET_NAME = 'documents';
-
 export async function signUpUser(email, password) {
   const { data, error } = await supabaseAnon.auth.signUp({ email, password });
 
@@ -74,24 +72,10 @@ export async function ensureUserProfile(user) {
   return data;
 }
 
-export async function getUserProfile(userId) {
-  const { data, error } = await supabaseAdmin
-    .from('users')
-    .select('id, email, created_at')
-    .eq('id', userId)
-    .single();
-
-  if (error) {
-    throw new AppError('User profile not found', 404);
-  }
-
-  return data;
-}
-
 export async function getDocumentsByUserId(userId) {
   const { data, error } = await supabaseAdmin
     .from('documents')
-    .select('id, user_id, filename, file_size, storage_path, uploaded_at')
+    .select('id, user_id, filename, s3_key, file_size, uploaded_at')
     .eq('user_id', userId)
     .order('uploaded_at', { ascending: false });
 
@@ -99,27 +83,13 @@ export async function getDocumentsByUserId(userId) {
     throw new AppError('Failed to fetch documents', 500);
   }
 
-  const documentsWithUrls = await Promise.all(
-    data.map(async (document) => {
-      const { data: signedUrl, error: urlError } = await supabaseAdmin.storage
-        .from(BUCKET_NAME)
-        .createSignedUrl(document.storage_path, 3600);
-
-      if (urlError) {
-        return { ...document, download_url: null };
-      }
-
-      return { ...document, download_url: signedUrl.signedUrl };
-    })
-  );
-
-  return documentsWithUrls;
+  return data;
 }
 
 export async function getDocumentById(documentId, userId) {
   const { data, error } = await supabaseAdmin
     .from('documents')
-    .select('id, user_id, filename, file_size, storage_path, uploaded_at')
+    .select('id, user_id, filename, s3_key, file_size, uploaded_at')
     .eq('id', documentId)
     .eq('user_id', userId)
     .single();
@@ -131,57 +101,26 @@ export async function getDocumentById(documentId, userId) {
   return data;
 }
 
-export async function uploadDocument(userId, file) {
-  const storagePath = `${userId}/${Date.now()}-${file.originalname}`;
-
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from(BUCKET_NAME)
-    .upload(storagePath, file.buffer, {
-      contentType: file.mimetype,
-      upsert: false,
-    });
-
-  if (uploadError) {
-    throw new AppError(`Upload failed: ${uploadError.message}`, 500);
-  }
-
+export async function createDocumentMetadata({ userId, filename, fileSize, s3Key }) {
   const { data, error } = await supabaseAdmin
     .from('documents')
     .insert({
       user_id: userId,
-      filename: file.originalname,
-      file_size: file.size,
-      storage_path: storagePath,
+      filename,
+      file_size: fileSize,
+      s3_key: s3Key,
     })
-    .select('id, user_id, filename, file_size, storage_path, uploaded_at')
+    .select('id, user_id, filename, s3_key, file_size, uploaded_at')
     .single();
 
   if (error) {
-    await supabaseAdmin.storage.from(BUCKET_NAME).remove([storagePath]);
     throw new AppError('Failed to save document metadata', 500);
   }
 
-  const { data: signedUrl } = await supabaseAdmin.storage
-    .from(BUCKET_NAME)
-    .createSignedUrl(storagePath, 3600);
-
-  return {
-    ...data,
-    download_url: signedUrl?.signedUrl ?? null,
-  };
+  return data;
 }
 
-export async function deleteDocument(documentId, userId) {
-  const document = await getDocumentById(documentId, userId);
-
-  const { error: storageError } = await supabaseAdmin.storage
-    .from(BUCKET_NAME)
-    .remove([document.storage_path]);
-
-  if (storageError) {
-    throw new AppError('Failed to delete file from storage', 500);
-  }
-
+export async function deleteDocumentMetadata(documentId, userId) {
   const { error } = await supabaseAdmin
     .from('documents')
     .delete()

@@ -47,12 +47,15 @@ export const api = {
   uploadDocument: (token, file) => {
     const formData = new FormData();
     formData.append('file', file);
-    return request('/documents', {
+    return request('/documents/upload', {
       method: 'POST',
       token,
       body: formData,
     });
   },
+
+  getDownloadUrl: (token, id) =>
+    request(`/documents/${id}/download`, { token }),
 
   deleteDocument: (token, id) =>
     request(`/documents/${id}`, { method: 'DELETE', token }),

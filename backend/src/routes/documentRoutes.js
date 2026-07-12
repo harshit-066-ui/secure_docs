@@ -1,20 +1,18 @@
 import { Router } from 'express';
-import multer from 'multer';
 import { authMiddleware } from '../middleware/authMiddleware.js';
+import { upload, validateUploadedFile } from '../middleware/uploadMiddleware.js';
 import {
   listDocuments,
-  createDocument,
+  uploadDocument,
+  downloadDocument,
   removeDocument,
 } from '../controllers/documentController.js';
 
 const router = Router();
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
-});
 
+router.post('/upload', authMiddleware, upload.single('file'), validateUploadedFile, uploadDocument);
 router.get('/', authMiddleware, listDocuments);
-router.post('/', authMiddleware, upload.single('file'), createDocument);
+router.get('/:id/download', authMiddleware, downloadDocument);
 router.delete('/:id', authMiddleware, removeDocument);
 
 export default router;
