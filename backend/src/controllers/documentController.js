@@ -53,7 +53,7 @@ export async function uploadDocument(req, res, next) {
 export async function downloadDocument(req, res, next) {
   try {
     const document = await getDocumentById(req.params.id, req.user.id);
-    const download = await generatePresignedDownloadUrl(document.s3_key);
+    const download = await generatePresignedDownloadUrl(document.s3_key, document.filename);
 
     res.json({
       data: {

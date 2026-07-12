@@ -55,11 +55,12 @@ export async function deleteDocument(s3Key) {
   }
 }
 
-export async function generatePresignedDownloadUrl(s3Key) {
+export async function generatePresignedDownloadUrl(s3Key, filename) {
   try {
     const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: s3Key,
+      ResponseContentDisposition: `attachment; filename="${filename}"`,
     });
 
     const url = await getSignedUrl(s3Client, command, {

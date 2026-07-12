@@ -104,12 +104,16 @@ export default function Documents() {
 
     try {
       const response = await api.getDownloadUrl(accessToken, id);
+      const url = response.data.url;
+      const downloadFilename = response.data.filename || filename;
+
       const link = document.createElement('a');
-      link.href = response.data.url;
-      link.download = filename;
-      link.target = '_blank';
+      link.href = url;
+      link.download = downloadFilename;
       link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     } catch (err) {
       setError(err.message || 'Download failed');
     } finally {
