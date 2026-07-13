@@ -6,7 +6,7 @@ export async function signUpUser(email, password) {
     email,
     password,
     options: {
-      emailRedirectTo: 'http://localhost:5173',
+      emailRedirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard`,
     },
   });
 
@@ -57,6 +57,32 @@ export async function logoutUser(accessToken) {
 // ===============================
 
 export async function createProfile(userId, username) {
+
+  // Wait until auth user exists
+  let userExists = false;
+  let attempts = 5;
+
+  while (!userExists && attempts > 0) {
+
+    const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+
+    if (data?.user) {
+      userExists = true;
+      break;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    attempts--;
+  }
+
+  if (!userExists) {
+    throw new AppError(
+      'Unable to verify authenticated user',
+      500
+    );
+  }
+
   const { data, error } = await supabaseAdmin
     .from('profiles')
     .insert({
@@ -73,7 +99,6 @@ export async function createProfile(userId, username) {
 
   return data;
 }
-
 export async function getProfileByUserId(userId) {
   const { data, error } = await supabaseAdmin
     .from('profiles')

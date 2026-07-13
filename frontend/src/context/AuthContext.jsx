@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api } from '../services/api';
-
+import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext(null);
-const SESSION_STORAGE_KEY = 'auth_session';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -12,17 +11,42 @@ export function AuthProvider({ children }) {
   const [username, setUsername] = useState('');
 
   useEffect(() => {
-    const storedSession = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (storedSession) {
+    let isMounted = true;
+
+    const initSession = async () => {
       try {
-        const parsed = JSON.parse(storedSession);
-        setSession(parsed);
-        setUser(parsed.user ?? null);
-      } catch {
-        localStorage.removeItem(SESSION_STORAGE_KEY);
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (isMounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+        }
+      } catch (err) {
+        console.error('Failed to get initial session:', err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    }
-    setLoading(false);
+    };
+
+    initSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        if (!isMounted) return;
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        if (!currentSession) {
+          setUsername('');
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      subscription?.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -32,6 +56,9 @@ export function AuthProvider({ children }) {
           const profileData = await api.getProfile(session.access_token);
           if (profileData?.data?.username) {
             setUsername(profileData.data.username);
+            setUser((prevUser) => 
+              prevUser ? { ...prevUser, username: profileData.data.username } : null
+            );
           }
         } catch (err) {
           console.error('Failed to fetch profile:', err);
@@ -43,27 +70,25 @@ export function AuthProvider({ children }) {
     fetchProfile();
   }, [session]);
 
-  const persistSession = (newSession) => {
-    if (newSession) {
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(newSession));
-    } else {
-      localStorage.removeItem(SESSION_STORAGE_KEY);
-    }
-    setSession(newSession);
-    setUser(newSession?.user ?? null);
-  };
-
   const signUp = async (username, email, password) => {
     const response = await api.signUp(username, email, password);
-    if (response.data.session) {
-      persistSession(response.data.session);
+    if (response.data?.session) {
+      await supabase.auth.setSession({
+        access_token: response.data.session.access_token,
+        refresh_token: response.data.session.refresh_token,
+      });
     }
     return response.data;
   };
 
   const login = async (email, password) => {
     const response = await api.login(email, password);
-    persistSession(response.data.session);
+    if (response.data?.session) {
+      await supabase.auth.setSession({
+        access_token: response.data.session.access_token,
+        refresh_token: response.data.session.refresh_token,
+      });
+    }
     return response.data;
   };
 
@@ -76,7 +101,7 @@ export function AuthProvider({ children }) {
         // Clear local session even if server logout fails
       }
     }
-    persistSession(null);
+    await supabase.auth.signOut();
   };
 
   const value = {
@@ -100,3 +125,4 @@ export function useAuth() {
   }
   return context;
 }
+
