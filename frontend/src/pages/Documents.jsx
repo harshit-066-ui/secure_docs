@@ -129,7 +129,7 @@ export default function Documents() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Documents</h1>
-            <p className="mt-1 text-slate-600">Upload and manage your files securely in Amazon S3</p>
+            <p className="mt-1 text-slate-600">Upload and manage your files securely </p>
           </div>
 
           <div>

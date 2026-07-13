@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
 export default function Signup() {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,6 +19,12 @@ export default function Signup() {
     setError('');
     setSuccess('');
 
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
+      setError('Username is required');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -31,7 +38,7 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const data = await signUp(email, password);
+      const data = await signUp(trimmedUsername, email, password);
 
       if (data.session) {
         navigate('/dashboard');
@@ -71,6 +78,21 @@ export default function Signup() {
                 {success}
               </div>
             )}
+
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-slate-700">
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="input-field mt-1"
+                placeholder="john123"
+              />
+            </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">

@@ -43,7 +43,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-            <p className="mt-1 text-slate-600">Welcome back, {user?.email}</p>
+            <p className="mt-1 text-slate-600">Welcome back, {user?.username}</p>
           </div>
           <Link to="/documents" className="btn-primary">
             Manage Documents

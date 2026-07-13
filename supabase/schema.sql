@@ -26,6 +26,15 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================
+-- Profiles table (extends auth.users with username)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
 -- Documents table (metadata only; files stored in Amazon S3)
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.documents (
@@ -44,10 +53,23 @@ CREATE INDEX IF NOT EXISTS idx_documents_uploaded_at ON public.documents(uploade
 -- Row Level Security (RLS)
 -- ============================================
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own profile"
   ON public.users FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can view own profile record"
+  ON public.profiles FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+  ON public.profiles FOR UPDATE
   USING (auth.uid() = id);
 
 CREATE POLICY "Users can view own documents"

@@ -32,14 +32,17 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
-  signUp: (email, password) =>
-    request('/auth/signup', { method: 'POST', body: { email, password } }),
+  signUp: (username, email, password) =>
+    request('/auth/signup', { method: 'POST', body: { username, email, password } }),
 
   login: (email, password) =>
     request('/auth/login', { method: 'POST', body: { email, password } }),
 
   logout: (token) =>
     request('/auth/logout', { method: 'POST', token }),
+
+  getProfile: (token) =>
+    request('/auth/profile', { token }),
 
   getDocuments: (token) =>
     request('/documents', { token }),

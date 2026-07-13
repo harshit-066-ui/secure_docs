@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api } from '../services/api';
 
+
 const AuthContext = createContext(null);
 const SESSION_STORAGE_KEY = 'auth_session';
 
@@ -8,6 +9,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
     const storedSession = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -23,6 +25,24 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (session?.access_token) {
+        try {
+          const profileData = await api.getProfile(session.access_token);
+          if (profileData?.data?.username) {
+            setUsername(profileData.data.username);
+          }
+        } catch (err) {
+          console.error('Failed to fetch profile:', err);
+        }
+      } else {
+        setUsername('');
+      }
+    };
+    fetchProfile();
+  }, [session]);
+
   const persistSession = (newSession) => {
     if (newSession) {
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(newSession));
@@ -33,8 +53,8 @@ export function AuthProvider({ children }) {
     setUser(newSession?.user ?? null);
   };
 
-  const signUp = async (email, password) => {
-    const response = await api.signUp(email, password);
+  const signUp = async (username, email, password) => {
+    const response = await api.signUp(username, email, password);
     if (response.data.session) {
       persistSession(response.data.session);
     }
@@ -63,6 +83,7 @@ export function AuthProvider({ children }) {
     user,
     session,
     loading,
+    username,
     signUp,
     login,
     logout,

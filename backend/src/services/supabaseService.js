@@ -53,6 +53,62 @@ export async function logoutUser(accessToken) {
 
 
 // ===============================
+// PROFILE OPERATIONS
+// ===============================
+
+export async function createProfile(userId, username) {
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .insert({
+      id: userId,
+      username,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('CREATE PROFILE ERROR:', error);
+    throw new AppError(error.message, 500);
+  }
+
+  return data;
+}
+
+export async function getProfileByUserId(userId) {
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('username')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('GET PROFILE ERROR:', error);
+    if (error.code === 'PGRST116') {
+      return null;
+    }
+    throw new AppError(error.message, 500);
+  }
+
+  return data;
+}
+
+export async function checkUsernameExists(username) {
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('username')
+    .eq('username', username)
+    .maybeSingle();
+
+  if (error) {
+    console.error('CHECK USERNAME ERROR:', error);
+    throw new AppError(error.message, 500);
+  }
+
+  return !!data;
+}
+
+
+// ===============================
 // DOCUMENT OPERATIONS
 // ===============================
 
