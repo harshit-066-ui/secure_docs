@@ -1,259 +1,215 @@
+---
+
 # Secure Cloud Document Management System
 
-A full-stack document management application built with React, Node.js, Express, Supabase, and Amazon S3.
+## 1. Introduction
 
-## Tech Stack
+This is a full-stack secure cloud document management system designed to provide a robust and safe environment for handling files. Users can securely authenticate to the platform and have full capabilities to upload, manage, download, and delete their documents. For maximum security and scalability, actual documents are stored securely using Amazon S3, while all document metadata is stored relationally in Supabase PostgreSQL. The backend APIs are fully protected using token-based authentication to ensure privacy and data integrity. Furthermore, the entire application is containerized using Docker, allowing for seamless deployment and reliable execution across any environment.
+
+---
+
+## 2. Features
+
+- User registration
+- User login/logout
+- Supabase authentication
+- Protected routes
+- User dashboard
+- Upload documents
+- View document list
+- Download documents
+- Delete documents
+- AWS S3 cloud storage
+- Supabase PostgreSQL metadata storage
+- REST API backend
+- Docker containerization
+
+---
+
+## 3. Technology Stack
 
 | Layer | Technology |
-|-------|------------|
-| Frontend | React, Vite, Tailwind CSS, React Router |
-| Backend | Node.js, Express.js |
+|---|---|
+| Frontend | React + Vite + JavaScript |
+| Styling | Tailwind CSS |
+| Backend | Node.js + Express.js |
 | Database | Supabase PostgreSQL |
-| Authentication | Supabase Auth (JWT) |
-| File Storage | Amazon S3 (AWS SDK v3) |
+| Authentication | Supabase Auth |
+| Storage | Amazon S3 |
+| Cloud Security | AWS IAM |
+| Containerization | Docker |
+| Version Control | Git/GitHub |
 
-## Project Structure
+---
 
+## 4. System Architecture
+
+The following diagram illustrates the high-level architecture of the Secure Cloud Document Management System:
+
+```mermaid
+flowchart LR
+
+User --> Frontend[React Frontend]
+
+Frontend --> Backend[Node.js Express Backend]
+
+Backend --> Auth[Supabase Auth]
+
+Backend --> Database[Supabase PostgreSQL]
+
+Backend --> S3[Amazon S3 Storage]
+
+Backend --> IAM[AWS IAM Permissions]
 ```
-intern_project/
+
+**Request Flow:**
+1. **User** interacts with the React frontend.
+2. **Frontend** sends HTTP requests to the Express backend.
+3. **Backend** verifies authentication via Supabase Auth for protected routes.
+4. **Backend** communicates with Supabase and AWS S3 to process the request.
+5. **Document metadata** is stored and retrieved from the Supabase PostgreSQL database.
+
+---
+
+## 5. Project Structure
+
+```text
+project-root/
 ├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   │   ├── supabase.js      # Supabase client setup
-│   │   │   └── s3.js            # AWS S3 client setup
-│   │   ├── controllers/
-│   │   │   ├── authController.js
-│   │   │   └── documentController.js
-│   │   ├── middleware/
-│   │   │   ├── authMiddleware.js
-│   │   │   ├── errorMiddleware.js
-│   │   │   └── uploadMiddleware.js
-│   │   ├── routes/
-│   │   │   ├── authRoutes.js
-│   │   │   ├── documentRoutes.js
-│   │   │   └── index.js
-│   │   ├── services/
-│   │   │   ├── s3Service.js         # S3 upload, download, delete, presigned URLs
-│   │   │   └── supabaseService.js   # Auth & document metadata
-│   │   ├── utils/
-│   │   └── server.js
-│   ├── .env.example
-│   └── package.json
 ├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── context/
-│   │   ├── lib/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   └── utils/
-│   ├── .env.example
-│   └── package.json
 ├── supabase/
-│   ├── schema.sql
-│   └── migration_s3.sql
-└── README.md
+├── docker-compose.yml
+├── README.md
+└── .env.example
 ```
 
-## Upload Flow
+---
 
-```
-React Frontend
-      │
-      ▼
-Express Backend  (JWT auth + file validation)
-      │
-      ▼
-AWS IAM Authenticated Request
-      │
-      ▼
-Amazon S3 Bucket
-      │
-      ▼
-Supabase PostgreSQL  (document metadata: s3_key, filename, file_size)
-```
+## 6. Backend Architecture
 
-## Prerequisites
+The backend is organized cleanly to separate concerns and ensure maintainability:
 
-- [Node.js](https://nodejs.org/) v18 or higher
-- [npm](https://www.npmjs.com/)
-- A [Supabase](https://supabase.com/) account
-- An [AWS](https://aws.amazon.com/) account with S3 access
+- **Routes (`src/routes`)**: Define the API endpoints for the application and map them to specific controllers.
+- **Controllers (`src/controllers`)**: Contain the core request handling logic and coordinate between services and responses.
+- **Middleware (`src/middleware`)**: Handle intermediate tasks such as verifying authentication tokens and validating uploaded files (e.g., using multer).
+- **Services (`src/services`)**: Encapsulate the complex business logic, such as interacting with AWS S3 and querying the Supabase database.
+- **Configuration (`src/config`)**: Manage configuration variables and integrations.
+- **Database connections**: Implemented securely to interact with the Supabase PostgreSQL database.
 
-## Required Dependencies
+---
 
-Install these manually before running the project.
+## 7. Frontend Architecture
 
-### Backend
+The frontend follows a modular React architecture:
 
-Existing dependencies (Express, Supabase, multer, etc.) plus:
+- **Components (`src/components`)**: Reusable UI elements used across different views.
+- **Pages (`src/pages`)**: Top-level React components representing distinct screens (e.g., Dashboard, Login).
+- **Context/State Management (`src/context`)**: Manage global application state, primarily user authentication status.
+- **API Services (`src/services`)**: Centralized functions to handle external HTTP requests to the backend API.
+- **Routing**: Manage navigation between different pages and enforce protected routes using React Router.
 
-```bash
-cd backend
-npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
-```
+---
 
-### Frontend
+## 8. Cloud Implementation
 
-No additional packages required for S3 integration. AWS credentials stay on the backend only.
+### Supabase
+- **PostgreSQL Database**: A robust relational database powering the application.
+- **Authentication**: Secure identity and access management for user sessions.
+- **Document Metadata Storage**: The `documents` table stores essential metadata like filename, size, and S3 keys. Additional tables include `users` and `profiles` for user management.
 
-## AWS Configuration
+### Amazon S3
+- **Private Object Storage**: All files are stored privately in S3 buckets.
+- **Upload Flow**: Files are securely uploaded through the backend to the S3 bucket.
+- **Download using Presigned URLs**: Temporary, secure access is granted for downloading files via generated presigned URLs.
+- **Delete Operations**: Removing a document removes the file from S3 alongside the metadata from Supabase.
 
-### 1. Create an S3 Bucket
+### AWS IAM
+- **Backend uses IAM credentials**: API keys are utilized by the backend to communicate with AWS S3.
+- **Permissions are limited to required S3 actions**: Applying the principle of least privilege for security.
+- **Credentials are stored using environment variables**: Keeping sensitive keys out of the source code.
 
-1. Open the [AWS S3 Console](https://s3.console.aws.amazon.com/).
-2. Click **Create bucket**.
-3. Choose a unique bucket name and region.
-4. Block all public access (recommended).
-5. Create the bucket.
+---
 
-### 2. Create IAM Credentials
-
-1. Open [IAM → Users](https://console.aws.amazon.com/iam/).
-2. Create a user with programmatic access.
-3. Attach a policy that allows S3 access to your bucket:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:PutObject",
-        "s3:GetObject",
-        "s3:DeleteObject"
-      ],
-      "Resource": "arn:aws:s3:::YOUR_BUCKET_NAME/*"
-    }
-  ]
-}
-```
-
-4. Save the **Access Key ID** and **Secret Access Key**.
-
-### 3. Configure CORS (optional)
-
-If you need direct browser access to presigned URLs from a different origin, add a CORS configuration on the bucket. For this app, downloads use presigned URLs returned by the backend, so default settings are usually sufficient.
-
-## Supabase Setup
-
-### 1. Create a Project
-
-1. Go to [supabase.com](https://supabase.com) and create a new project.
-
-### 2. Run Database Schema
-
-**New project:** run `supabase/schema.sql` in the SQL Editor.
-
-**Existing project (migrating from Supabase Storage):** run `supabase/migration_s3.sql`.
-
-### 3. Configure Authentication
-
-1. Enable the **Email** provider under **Authentication → Providers**.
-2. Set Site URL to `http://localhost:5173`.
-3. Add redirect URL: `http://localhost:5173/**`.
-4. Optionally disable email confirmation for local testing.
-
-### 4. Get API Keys
-
-From **Project Settings → API**, copy:
-
-- Project URL → `SUPABASE_URL`
-- anon public key → `SUPABASE_ANON_KEY`
-- service_role key → `SUPABASE_SERVICE_KEY` (backend only)
-
-## Environment Variables
+## 9. Environment Variables
 
 ### Backend (`backend/.env`)
 
-Copy from `.env.example`:
-
-```env
-PORT=5000
-AWS_REGION=us-east-1
-AWS_BUCKET_NAME=your-bucket-name
-AWS_ACCESS_KEY_ID=your-access-key-id
-AWS_SECRET_ACCESS_KEY=your-secret-access-key
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_KEY=your-service-role-key
-```
-
-| Variable | Description |
-|----------|-------------|
-| `AWS_REGION` | AWS region where the S3 bucket lives |
-| `AWS_BUCKET_NAME` | S3 bucket name |
-| `AWS_ACCESS_KEY_ID` | IAM access key (backend only) |
-| `AWS_SECRET_ACCESS_KEY` | IAM secret key (backend only) |
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Supabase anon/public key |
-| `SUPABASE_SERVICE_KEY` | Supabase service role key (backend only) |
+| Variable | Purpose |
+|---|---|
+| `PORT` | The port the backend server runs on |
+| `SUPABASE_URL` | The endpoint URL for the Supabase project |
+| `SUPABASE_ANON_KEY` | The anonymous key for Supabase public access |
+| `SUPABASE_SERVICE_ROLE_KEY` | The service role key to bypass RLS policies on the backend |
+| `AWS_REGION` | The region of the AWS S3 bucket |
+| `AWS_ACCESS_KEY_ID` | The IAM access key ID for AWS |
+| `AWS_SECRET_ACCESS_KEY` | The IAM secret access key for AWS |
+| `AWS_BUCKET_NAME` | The name of the AWS S3 bucket |
+| `FRONTEND_URL` | Allowed origin for CORS configuration |
 
 ### Frontend (`frontend/.env`)
 
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
-VITE_API_URL=http://localhost:5000/api
-```
+| Variable | Purpose |
+|---|---|
+| `VITE_API_URL` | The base URL pointing to the backend API |
+| `VITE_SUPABASE_URL` | The endpoint URL for the Supabase project |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | The public publishable key for Supabase |
 
-Never put AWS credentials in the frontend.
+---
 
-## Running the Project
+## 10. Installation and Setup
 
-After installing dependencies manually:
+### Requirements
+- Node.js
+- npm
+- Docker
+- Supabase account
+- AWS account
 
-**Terminal 1 — Backend:**
+### Local Setup
 
+**Backend:**
 ```bash
 cd backend
-cp .env.example .env
-# Edit .env with your credentials
 npm install
-npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 npm run dev
 ```
 
-**Terminal 2 — Frontend:**
-
+**Frontend:**
 ```bash
 cd frontend
-cp .env.example .env
-# Edit .env with your Supabase credentials
 npm install
 npm run dev
 ```
 
-Visit `http://localhost:5173`.
+---
 
-## API Endpoints
+## 11. Running With Docker
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/health` | No | Health check |
-| POST | `/api/auth/signup` | No | Register a user |
-| POST | `/api/auth/login` | No | Log in |
-| POST | `/api/auth/logout` | Yes | Log out |
-| GET | `/api/documents` | Yes | List user documents |
-| POST | `/api/documents/upload` | Yes | Upload a document to S3 |
-| GET | `/api/documents/:id/download` | Yes | Get presigned download URL |
-| DELETE | `/api/documents/:id` | Yes | Delete S3 object and metadata |
+The application includes a `docker-compose.yml` file to quickly spin up the frontend and backend containers together.
 
-All protected routes require `Authorization: Bearer <jwt_token>`.
+**To start the application in Docker:**
+```bash
+docker compose up --build
+```
 
-## Security Notes
+**To stop the application:**
+```bash
+docker compose down
+```
 
-- AWS credentials are read from environment variables on the backend only.
-- File type and size (max 10 MB) are validated before upload.
-- Only authenticated users can upload, download, or delete documents.
-- Users can only access their own documents (enforced by JWT + user_id checks).
-- Presigned URLs expire after 1 hour.
+This will run the Node.js Express backend API and serve the React Vite frontend using their respective containers.
 
-## Allowed File Types
+---
 
-PDF, DOC, DOCX, TXT, PNG, JPG, JPEG, GIF, XLS, XLSX, CSV
+## 12. API Documentation
 
-## License
-
-MIT
+| Method | Endpoint | Description | Authentication |
+|---|---|---|---|
+| POST | `/api/auth/signup` | Register a new user | No |
+| POST | `/api/auth/login` | Authenticate a user | No |
+| POST | `/api/auth/logout` | Terminate user session | Yes |
+| GET | `/api/auth/profile` | Retrieve user profile information | Yes |
+| POST | `/api/documents/upload` | Upload a new document | Yes |
+| GET | `/api/documents/` | Get list of user documents | Yes |
+| GET | `/api/documents/:id/download` | Generate download link for a document | Yes |
+| DELETE | `/api/documents/:id` | Delete a document | Yes |

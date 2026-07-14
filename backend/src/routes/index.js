@@ -5,7 +5,7 @@ import documentRoutes from './documentRoutes.js';
 const router = Router();
 
 router.get('/health', (req, res) => {
-  res.json({ data: { message: 'API is running' } });
+  res.json({ status: 'ok', service: 'backend' });
 });
 
 router.use('/auth', authRoutes);
